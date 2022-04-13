@@ -1,0 +1,54 @@
+﻿@page "/"
+@inject EventService eventService;
+
+<table class="table table-striped table-sm" style="table-layout: fixed; width:100%">
+    <thead>
+        <tr>
+            <th>Process name</th>
+            <th style="text-align:right; width: 100px">Process usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (memoryData != null)
+        {
+            @foreach (var item in memoryData.OrderByDescending(x => x.Used).ToList())
+            {
+                <tr>
+                    <td style="word-wrap: break-word; width: 100%;">@item.Name</td>
+                    <td style="text-align:right; width: auto">@BytesToString(item.Used)</td>
+                </tr>
+
+            }
+        }
+        else
+        {
+            <div>Waiting</div>
+        }
+    </tbody>
+</table>
+
+
+@code {
+    private List<MemoryData> memoryData = null!;
+    protected override void OnInitialized()
+    {
+        eventService.UiUpdater += UpdateUI;
+    }
+
+
+    private void UpdateUI(object? sender, List<MemoryData> e)
+    {
+        memoryData = e;
+        InvokeAsync(() => StateHasChanged());
+    }
+
+    private String BytesToString(double byteCount)
+    {
+        string[] suf = { "B", "KB", "MB", "GB" };
+        if (byteCount == 0)
+            return "0" + suf[0];
+        int place = Convert.ToInt32(Math.Floor(Math.Log(byteCount, 1024)));
+        double num = Math.Round(byteCount / Math.Pow(1024, place), 1);
+        return (Math.Sign(byteCount) * num).ToString() + suf[place];
+    }
+}
